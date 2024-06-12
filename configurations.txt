@@ -1,0 +1,12 @@
+# This is the configuration file to set request details to ChatGPT-4
+
+# Set the path to folder with photo to be processed
+source_folder = ''
+
+# Set the path to destination folder where processed photo will be downloaded
+# The destination folder is optional, if the destination path isn't provided
+# the processed photo will be downloaded to the source folder (optional)
+destination_folder = ''
+
+# Set the prompt
+prompt = ''
