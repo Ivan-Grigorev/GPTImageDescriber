@@ -1,12 +1,11 @@
-# This is the configuration file to set request details to ChatGPT-4
+# Configuration settings for processing function
 
-# Set the path to folder with photo to be processed
-source_folder = ''
+# Path to the source folder with photos to be processed
+source_folder = /Users/a1/PythonProjects/GPTImageDescriber/Images/IMG_7809.jpeg
 
-# Set the path to destination folder where processed photo will be downloaded
-# The destination folder is optional, if the destination path isn't provided
-# the processed photo will be downloaded to the source folder (optional)
+# Path to the destination folder for processed photos
+# If not provided, the processed photos will be saved in the source folder
 destination_folder = ''
 
-# Set the prompt
-prompt = ''
+# The prompt message to ChatGPT
+prompt = Create a title and 30 keywords for this image. The keywords should be SEO optimized and reflect current trends and interests. The keywords are single words, not combinations of words.
