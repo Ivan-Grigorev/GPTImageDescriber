@@ -1,6 +1,7 @@
 import base64
 import logging
 import os
+import re
 import requests
 import sys
 import time
@@ -34,7 +35,7 @@ class GPTImagesDescriber:
         self.src_path = str(src_path)
         self.dst_path = str(dst_path)
 
-    def image_to_base64(self) -> str:
+    def image_to_base64(self):
         """
         Converts an image to a base64 string.
 
@@ -45,7 +46,7 @@ class GPTImagesDescriber:
         with open(self.src_path, 'rb') as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    def process_photo(self) -> str:
+    def process_photo(self):
         """
         Processes a given photo to generate a title, keywords, and suitable holidays
         with ChatGPT-4.
@@ -53,9 +54,6 @@ class GPTImagesDescriber:
         Returns:
              dict: A dictionary containing the generated title, keywords, and holidays.
         """
-
-        # Record the function process start time
-        time_start = time.perf_counter()
 
         # Convert the image to a based64 string
         image_base64 = self.image_to_base64()
@@ -94,12 +92,39 @@ class GPTImagesDescriber:
             json=payload,
         )
 
-        # Display the function process time
-        logger.info(
-            f"Images processing time is {time.perf_counter() - time_start:.2f} seconds."
-        )
-
         return response.json()
+
+    def parse_response(self, image_file):
+        """
+        Parses the response from GPT-4 to extract the title and keywords.
+
+        Returns:
+            tuple: A tuple containing the parsed title and keywords.
+        """
+
+        content = self.process_photo().get('choices')[0].get('message').get('content')
+
+        # Use regular expressions to extract the title and keywords
+        title_match = re.search(r'\*\*Title:\*\*\n(.+)', content)
+        keywords_match = re.search(r'\*\*Keywords:\*\*\n(.+)', content)
+
+        # Extract and process the title
+        if title_match:
+            title = title_match.group(1).strip()
+            title = title.replace(' ', '_').lower()
+        else:
+            # Leave the file name unchanged
+            title = image_file
+            logger.warning(
+                f"Due to the lack of title data, "
+                f"the title of the {image_file} file has not been changed."
+            )
+
+        # Extract and process the keywords
+        keywords = keywords_match.group(1).strip() if keywords_match else 'No Keywords'
+        keywords = ', '.join([kw.strip() for kw in keywords.split(',')])
+
+        return title, keywords
 
     def __str__(self):
         return (
@@ -113,6 +138,7 @@ class GPTImagesDescriber:
 
 if __name__ == '__main__':
     try:
+        # Extract settings from the configurations file
         configuration = {}
         with open('configurations.txt', 'r') as f:
             for line in f:
@@ -129,7 +155,6 @@ if __name__ == '__main__':
                 'destination_folder', configuration.get('source_folder')
             ),
         )
-        print(image_describer.process_photo())
     except FileNotFoundError as e:
         logger.error(
             f"Could not find {e.filename}. Please ensure the file exists and is accessible."
