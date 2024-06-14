@@ -1,11 +1,13 @@
 # Configuration settings for processing function
 
+# The prompt message to ChatGPT
+prompt = Create a title, concise description, and 30 keywords for this image. The description should be short, like a title. The keywords should be SEO optimized and reflect current trends and interests. The keywords should be single words, not combinations of words.
 # Path to the source folder with photos to be processed
-source_folder = /Users/a1/PythonProjects/GPTImageDescriber/Images/IMG_7809.jpeg
+source_folder = /Users/a1/Downloads/Images
 
 # Path to the destination folder for processed photos
 # If not provided, the processed photos will be saved in the source folder
-destination_folder = ''
+destination_folder =
 
-# The prompt message to ChatGPT
-prompt = Create a title and 30 keywords for this image. The keywords should be SEO optimized and reflect current trends and interests. The keywords are single words, not combinations of words.
+# The author name of the images
+author_name = Tetiana Kreminska
