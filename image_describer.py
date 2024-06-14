@@ -1,4 +1,6 @@
-from PIL import Image, PngImagePlugin, JpegImagePlugin
+from iptcinfo3 import IPTCInfo
+from PIL import Image, JpegImagePlugin
+from pathlib import Path
 import base64
 import logging
 import os
@@ -8,13 +10,10 @@ import sys
 import shutil
 import time
 
-# Set Logging configuration
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%d/%m/%Y %H:%M:%S',
-)
-logger = logging.getLogger(__name__)
+from logging_config import setup_logger
+
+# Initialize logger using the setup function
+logger = setup_logger(__name__)
 
 # Set your OpenAI API key
 try:
@@ -36,6 +35,7 @@ class GPTImagesDescriber:
         src_path (str): The source directory containing the images to be processed.
         image_files (list): List of image file names to be processed.
         dst_path (str): The destination directory for saving the processed images.
+        author_name (str): The author name of images.
 
     Methods:
         __init__(prompt, src_path, image_files, dst_path):
@@ -57,7 +57,7 @@ class GPTImagesDescriber:
             Returns a string representation of the GPTImagesDescriber instance.
     """
 
-    def __init__(self, prompt, src_path, image_files, dst_path):
+    def __init__(self, prompt, src_path, image_files, dst_path, author_name):
         """
         Initializes the GPTImagesDescriber with a prompt, source path, list of image files, and destination path.
 
@@ -72,6 +72,7 @@ class GPTImagesDescriber:
         self.src_path = src_path
         self.image_files = image_files
         self.dst_path = dst_path if dst_path else src_path
+        self.author_name = author_name
 
     def process_photo(self, image_file):
         """
@@ -128,28 +129,32 @@ class GPTImagesDescriber:
         """
 
         response_data = self.process_photo(image_file)
-        content = response_data.get('choices')[0].get('message').get('content')
 
-        # Use regular expressions to extract the title and keywords
-        title_match = re.search(r'\*\*Title:\*\*\n(.+)', content)
-        keywords_match = re.search(r'\*\*Keywords:\*\*\n(.+)', content)
+        # Check if there is an error in the ChatGPT response
+        if 'error' in response_data.keys():
+            logger.error(f"{response_data.get('error')['message']}")
+            sys.exit(1)
 
-        # Extract and process the title
-        if title_match:
-            title = title_match.group(1).strip()
+        content = response_data['choices'][0].get('message').get('content')
+
+        # Extract title
+        title_match = re.search(r'\*\*Title:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE)
+        title = title_match.group(1).strip().replace(":", "") if title_match else "No Title"
+
+        # Extract description
+        description_match = re.search(r'\*\*Description:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE)
+        description = description_match.group(1).strip().replace(":", "") if description_match else "No Description"
+
+        # Extract keywords
+        keywords_match = re.search(r'\*\*Keywords:\*\*[\s\n]*([^\*]*)', content, re.IGNORECASE)
+        if keywords_match:
+            keywords_text = keywords_match.group(1).strip()
+            # Clean the keywords by removing numbers and any other unwanted characters
+            keywords_list = re.sub(r'\d+\.?', '', keywords_text).replace(",", " ").lower().split()
         else:
-            # Leave the file name unchanged
-            title = os.path.basename(image_file)
-            logger.warning(
-                f"Due to the lack of title data, "
-                f"the title of the '{title}' file has not been changed."
-            )
+            keywords_list = "No Keywords"
 
-        # Extract and process the keywords
-        keywords = keywords_match.group(1).strip() if keywords_match else 'No Keywords'
-        keywords = ', '.join([kw.strip() for kw in keywords.split(',')])
-
-        return title, keywords
+        return title, description, keywords_list
 
     def add_metadata(self):
         """
@@ -164,54 +169,55 @@ class GPTImagesDescriber:
         time_start = time.perf_counter()
 
         # Get number of files to process
-        files_num = sum(
-            1
-            for entry in os.scandir(self.src_path)
-            if entry.is_file() and not entry.name.startswith('.')
-        )
+        files_num = len(self.image_files)
         logger.info(f"Images processing has started! {files_num} to process.")
+
         # Get title and keywords for each image file
-        try:
-            for image in self.image_files:
-                image_path = os.path.join(self.src_path, image)
-                destination_path = os.path.join(self.dst_path, image)
-                # Check if the file is an image based on its extension
-                if image.lower().endswith(
-                    ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
-                ):
-                    try:
-                        with open(image_path, 'rb') as image_file:
-                            title, keywords = self.parse_response(image_file=image_file)
-                            # Open image and modify metadata
-                            with Image.open(image_path) as img:
-                                metadata = img.info
-                                if isinstance(img, PngImagePlugin.PngImageFile):
-                                    metadata.update(
-                                        {'Title': title, 'Keywords': keywords}
+        for image_name in self.image_files:
+            image_path = os.path.join(self.src_path, image_name)
+            destination_path = os.path.join(self.dst_path, image_name)
+
+            # Check if the file is an image based on its extension
+            if image_name.lower().endswith(
+                    ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.ico', '.svg')
+            ):
+                try:
+                    with open(image_path, 'rb') as image_file:
+                        title, description, keywords = self.parse_response(image_file=image_file)
+
+                        # Open image and modify metadata
+                        with Image.open(image_path) as img:
+                            # JPEG Metadata
+                            if isinstance(img, JpegImagePlugin.JpegImageFile):
+                                # Load IPTC metadata or create a new one
+                                try:
+                                    info = IPTCInfo(image_path)
+                                except Exception as e:
+                                    logger.error(
+                                        f"No IPTC metadata found, create a new one. Error: {e}"
                                     )
-                                    img.save(destination_path, pnginfo=metadata)
-                                elif isinstance(img, JpegImagePlugin.JpegImageFile):
-                                    exif_data = img.getexif()
-                                    exif_data[270] = (
-                                        title  # tag for 'Image Description'
-                                    )
-                                    exif_data[40094] = keywords  # tag for 'XP Keywords'
-                                    img.save(destination_path, exif=exif_data)
-                                else:
-                                    img.save(destination_path)
-                                logger.info(f"Metadata added to {image}.")
-                    except Exception as e:
-                        logger.error(f"Error adding metadata to {image}: {e}")
-                else:
-                    # Move non-image files to the 'Not_Images' folder
-                    not_img_fld = os.path.join(self.src_path, 'Not_Images')
-                    if os.path.exists(not_img_fld):
-                        shutil.move(image_path, not_img_fld)
-                    os.mkdir(not_img_fld)
-                    not_img_fld_path = os.path.join(not_img_fld, image)
-                    shutil.move(image_path, not_img_fld_path)
-        except Exception as e:
-            logger.error(f"Error {e} reading image files from {self.src_path}")
+                                    info = IPTCInfo(None)
+                                info['object name'] = title
+                                info['caption/abstract'] = description
+                                info['keywords'] = keywords
+                                info['by-line'] = self.author_name
+                                # Save the image with new IPTC metadata
+                                info.save_as(destination_path)
+                                logger.info(f"Metadata added to {image_name} (JPEG)")
+
+                            # Other image formats - move file without modification
+                            else:
+                                img.save(destination_path)
+                                logger.info(f"Because the image format is not processed,"
+                                            f" {image_name} has been moved to {destination_path}.")
+
+                except Exception as e:
+                    logger.error(f"Error adding metadata to {image_name}: {e}")
+            else:
+                # Move non-image files to the 'Not_Images' folder
+                not_img_fld = os.path.join(self.dst_path, 'Not_Images')
+                Path(not_img_fld).mkdir(exist_ok=True)
+                shutil.move(image_path, os.path.join(not_img_fld, image_name))
 
         # Display the images processing time
         logger.info(
@@ -231,12 +237,13 @@ class GPTImagesDescriber:
             f"\tprompt={self.prompt},\n"
             f"\tsrc_path={self.src_path},\n"
             f"\timage_files={self.image_files},\n"
-            f"\tdst_path={self.dst_path}\n"
+            f"\tdst_path={self.dst_path},\n"
+            f"\tauthor_name={self.author_name}\n"
             f")"
         )
 
 
-if __name__ == '__main__':
+def main():
     try:
         # Extract settings from the configurations file
         configurations = {}
@@ -249,7 +256,7 @@ if __name__ == '__main__':
                     value = value.strip()
                     configurations[key] = value
 
-            image_describer = GPTImagesDescriber(
+        image_describer = GPTImagesDescriber(
                 prompt=configurations.get('prompt'),
                 src_path=configurations.get('source_folder'),
                 image_files=[
@@ -258,8 +265,9 @@ if __name__ == '__main__':
                     if not f.startswith('.')
                 ],
                 dst_path=configurations.get('destination_folder'),
+                author_name=configurations.get('author_name')
             )
-        print(image_describer.__str__())
+        print(image_describer)
         image_describer.add_metadata()
     except FileNotFoundError as e:
         logger.error(
@@ -269,3 +277,7 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error(f"Error reading the configuration file: {e}")
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
