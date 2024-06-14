@@ -1,16 +1,15 @@
-from iptcinfo3 import IPTCInfo
-from PIL import Image, JpegImagePlugin
-from pathlib import Path
 import base64
-import logging
 import os
 import re
-import requests
-import sys
 import shutil
+import sys
 import time
+from pathlib import Path
 
+import requests
+from iptcinfo3 import IPTCInfo
 from logging_config import setup_logger
+from PIL import Image, JpegImagePlugin
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)
@@ -138,19 +137,33 @@ class GPTImagesDescriber:
         content = response_data['choices'][0].get('message').get('content')
 
         # Extract title
-        title_match = re.search(r'\*\*Title:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE)
-        title = title_match.group(1).strip().replace(":", "") if title_match else "No Title"
+        title_match = re.search(
+            r'\*\*Title:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE
+        )
+        title = (
+            title_match.group(1).strip().replace(":", "") if title_match else "No Title"
+        )
 
         # Extract description
-        description_match = re.search(r'\*\*Description:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE)
-        description = description_match.group(1).strip().replace(":", "") if description_match else "No Description"
+        description_match = re.search(
+            r'\*\*Description:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE
+        )
+        description = (
+            description_match.group(1).strip().replace(":", "")
+            if description_match
+            else "No Description"
+        )
 
         # Extract keywords
-        keywords_match = re.search(r'\*\*Keywords:\*\*[\s\n]*([^\*]*)', content, re.IGNORECASE)
+        keywords_match = re.search(
+            r'\*\*Keywords:\*\*[\s\n]*([^\*]*)', content, re.IGNORECASE
+        )
         if keywords_match:
             keywords_text = keywords_match.group(1).strip()
             # Clean the keywords by removing numbers and any other unwanted characters
-            keywords_list = re.sub(r'\d+\.?', '', keywords_text).replace(",", " ").lower().split()
+            keywords_list = (
+                re.sub(r'\d+\.?', '', keywords_text).replace(",", " ").lower().split()
+            )
         else:
             keywords_list = "No Keywords"
 
@@ -168,6 +181,10 @@ class GPTImagesDescriber:
         # Record the start time of the process of handling the images
         time_start = time.perf_counter()
 
+        # Initialize counters for images
+        processed_count = 0
+        unprocessed_count = 0
+
         # Get number of files to process
         files_num = len(self.image_files)
         logger.info(f"Images processing has started! {files_num} to process.")
@@ -179,11 +196,23 @@ class GPTImagesDescriber:
 
             # Check if the file is an image based on its extension
             if image_name.lower().endswith(
-                    ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.ico', '.svg')
+                (
+                    '.jpg',
+                    '.jpeg',
+                    '.png',
+                    '.gif',
+                    '.bmp',
+                    '.webp',
+                    '.tiff',
+                    '.ico',
+                    '.svg',
+                )
             ):
                 try:
                     with open(image_path, 'rb') as image_file:
-                        title, description, keywords = self.parse_response(image_file=image_file)
+                        title, description, keywords = self.parse_response(
+                            image_file=image_file
+                        )
 
                         # Open image and modify metadata
                         with Image.open(image_path) as img:
@@ -194,8 +223,7 @@ class GPTImagesDescriber:
                                     info = IPTCInfo(image_path)
                                 except Exception as e:
                                     logger.error(
-                                        f"No IPTC metadata found, create a new one. Error: {e}"
-                                    )
+                                        f"No IPTC metadata found, create a new one. Error: {e}")
                                     info = IPTCInfo(None)
                                 info['object name'] = title
                                 info['caption/abstract'] = description
@@ -204,15 +232,19 @@ class GPTImagesDescriber:
                                 # Save the image with new IPTC metadata
                                 info.save_as(destination_path)
                                 logger.info(f"Metadata added to {image_name} (JPEG)")
+                                processed_count += 1
 
                             # Other image formats - move file without modification
                             else:
                                 img.save(destination_path)
-                                logger.info(f"Because the image format is not processed,"
-                                            f" {image_name} has been moved to {destination_path}.")
+                                logger.info(
+                                    f"Because the image format is not processed,"
+                                    f" {image_name} has been moved to {destination_path}."
+                                )
 
                 except Exception as e:
                     logger.error(f"Error adding metadata to {image_name}: {e}")
+                    unprocessed_count += 1
             else:
                 # Move non-image files to the 'Not_Images' folder
                 not_img_fld = os.path.join(self.dst_path, 'Not_Images')
@@ -221,6 +253,8 @@ class GPTImagesDescriber:
 
         # Display the images processing time
         logger.info(
+            f"Processing complete: "
+            f"{processed_count} images processed, {unprocessed_count} unprocessed. "
             f"Images processing time is {time.perf_counter() - time_start:.2f} seconds."
         )
 
@@ -246,33 +280,33 @@ class GPTImagesDescriber:
 def main():
     try:
         # Extract settings from the configurations file
-        configurations = {}
         with open('configurations.txt', 'r') as f:
-            for line in f:
-                line = line.strip()  # remove leading and trailing whitespace
-                if line and not line.startswith('#'):  # ignore empty lines and comments
-                    key, value = line.split('=', 1)
-                    key = key.strip()
-                    value = value.strip()
-                    configurations[key] = value
+            configurations = {
+                key.strip(): value.strip()
+                for key, value in (
+                    line.split('=', 1)
+                    for line in f
+                    if line.strip() and not line.startswith('#')
+                )
+            }
 
         image_describer = GPTImagesDescriber(
-                prompt=configurations.get('prompt'),
-                src_path=configurations.get('source_folder'),
-                image_files=[
-                    f
-                    for f in os.listdir(configurations.get('source_folder'))
-                    if not f.startswith('.')
-                ],
-                dst_path=configurations.get('destination_folder'),
-                author_name=configurations.get('author_name')
-            )
+            prompt=configurations.get('prompt'),
+            src_path=configurations.get('source_folder'),
+            image_files=[
+                f
+                for f in os.listdir(configurations.get('source_folder'))
+                if not f.startswith('.')
+            ],
+            dst_path=configurations.get('destination_folder'),
+            author_name=configurations.get('author_name'),
+        )
         print(image_describer)
         image_describer.add_metadata()
     except FileNotFoundError as e:
         logger.error(
-            f"Could not find {e.filename}. Please ensure the file exists and is accessible."
-        )
+            f"Could not find {
+                e.filename}. Please ensure the file exists and is accessible.")
         sys.exit(1)
     except Exception as e:
         logger.error(f"Error reading the configuration file: {e}")
