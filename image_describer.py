@@ -186,7 +186,11 @@ class GPTImagesDescriber:
         unprocessed_count = 0
 
         # Get number of files to process
-        files_num = len(self.image_files)
+        files_num = len([
+            f
+            for f in os.listdir(self.src_path)
+            if os.path.isfile(os.path.join(self.src_path, f)) and not f.startswith('.')
+        ])
         logger.info(f"Images processing has started! {files_num} to process.")
 
         # Get title and keywords for each image file
@@ -207,7 +211,7 @@ class GPTImagesDescriber:
                     '.ico',
                     '.svg',
                 )
-            ):
+            ) and os.path.isfile(image_path):
                 try:
                     with open(image_path, 'rb') as image_file:
                         title, description, keywords = self.parse_response(
@@ -248,8 +252,13 @@ class GPTImagesDescriber:
             else:
                 # Move non-image files to the 'Not_Images' folder
                 not_img_fld = os.path.join(self.dst_path, 'Not_Images')
-                Path(not_img_fld).mkdir(exist_ok=True)
-                shutil.move(image_path, os.path.join(not_img_fld, image_name))
+                Path(not_img_fld).mkdir(parents=True, exist_ok=True)
+                if not os.path.samefile(image_path, not_img_fld):
+                    shutil.move(image_path, os.path.join(not_img_fld, image_name))
+                else:
+                    logger.error(
+                        f"Error: Cannot move '{image_path}' into itself {not_img_fld}."
+                    )
 
         # Display the images processing time
         logger.info(
@@ -301,7 +310,6 @@ def main():
             dst_path=configurations.get('destination_folder'),
             author_name=configurations.get('author_name'),
         )
-        print(image_describer)
         image_describer.add_metadata()
     except FileNotFoundError as e:
         logger.error(
