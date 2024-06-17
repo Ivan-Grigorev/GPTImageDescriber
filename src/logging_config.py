@@ -1,9 +1,7 @@
-"""
-This module provides centralized configuration for logging in Python applications.
-It includes a custom colored formatter and a function to setup and retrieve logger instances.
-"""
+"""Provides centralized logging configuration for Python applications."""
 
 import logging
+
 from colorlog import ColoredFormatter
 
 # Define colors for different log levels
@@ -25,15 +23,14 @@ formatter = ColoredFormatter(
 
 def setup_logger(logger_name):
     """
-    Setup a logger instance with the specified name using the configured ColoredFormatter.
+    Set up a logger instance with the specified name using the configured ColoredFormatter.
 
     Args:
-        logger_name (str): Name of the logger instance.
+        logger_name (str): The name of the logger instance.
 
     Returns:
-        logging.Logger: Configured logger instance.
+        logging.Logger: The configured logger instance.
     """
-
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
 
