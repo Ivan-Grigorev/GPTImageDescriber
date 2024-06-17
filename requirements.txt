@@ -2,4 +2,5 @@ colorlog~=6.8.2
 iptcinfo3~=2.1.4
 openai~=1.33.0
 pillow~=10.3.0
+pre-commit~=3.7.1
 requests~=2.32.3
