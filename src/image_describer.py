@@ -12,14 +12,15 @@ import requests
 from iptcinfo3 import IPTCInfo
 from PIL import Image, JpegImagePlugin
 
-from logging_config import setup_logger
+from src.check_access import terminate_process_using_file
+from src.logging_config import setup_logger
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)
 
 # Set your OpenAI API key
 try:
-    with open('../openai_key.txt', 'r') as f:
+    with open('./openai_key.txt', 'r') as f:
         API_KEY = f.read().strip()
 except FileNotFoundError as e:
     logger.error(f"Could not find {e.filename}. Please ensure the file exists and is accessible.")
@@ -38,7 +39,7 @@ class ImagesDescriber:
         author_name (str): The author name of images.
 
     Methods:
-        __init__(prompt, src_path, image_files, dst_path):
+        __init__.py(prompt, src_path, image_files, dst_path):
             Initializes the ImagesDescriber with the specified parameters.
 
         process_photo(image_file):
@@ -186,6 +187,9 @@ class ImagesDescriber:
         for image_name in self.image_files:
             image_path = os.path.join(self.src_path, image_name)
             destination_path = os.path.join(self.dst_path, image_name)
+
+            # Terminate processes using the image file
+            terminate_process_using_file(image_path)
 
             # Check if the file is an image based on its extension
             if image_name.lower().endswith(
