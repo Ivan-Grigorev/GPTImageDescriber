@@ -12,7 +12,7 @@ import requests
 from iptcinfo3 import IPTCInfo
 from PIL import Image, JpegImagePlugin
 
-from src.check_access import terminate_process_using_file
+from src.check_access import terminate_processes_using_file
 from src.logging_config import setup_logger
 
 # Initialize logger using the setup function
@@ -189,7 +189,7 @@ class ImagesDescriber:
             destination_path = os.path.join(self.dst_path, image_name)
 
             # Terminate processes using the image file
-            terminate_process_using_file(image_path)
+            terminate_processes_using_file(image_path)
 
             # Check if the file is an image based on its extension
             if image_name.lower().endswith(
@@ -230,6 +230,9 @@ class ImagesDescriber:
                                 logger.info(f"Metadata added to {image_name} (JPEG)")
                                 processed_count += 1
 
+                                # Remove backup file if it exists
+                                self.remove_backup_file(destination_path)
+
                             # Other image formats - move file without modification
                             else:
                                 img.save(destination_path)
@@ -243,12 +246,29 @@ class ImagesDescriber:
                     unprocessed_count += 1
             else:
                 # Move non-image files to the 'Not_Images' folder
-                not_img_fld = os.path.join(self.dst_path, 'Not_Images')
-                Path(not_img_fld).mkdir(parents=True, exist_ok=True)
-                if not os.path.samefile(image_path, not_img_fld):
-                    shutil.move(image_path, os.path.join(not_img_fld, image_name))
-                else:
-                    logger.error(f"Error: Cannot move '{image_path}' into itself {not_img_fld}.")
+                try:
+                    not_img_fld = os.path.join(self.dst_path, 'Not_Images')
+                    Path(not_img_fld).mkdir(parents=True, exist_ok=True)
+
+                    # Separate the filename and extension
+                    base_name, ext = os.path.splitext(image_name)
+                    counter = 1
+                    file_to_move = image_name
+                    destination_file_path = os.path.join(not_img_fld, file_to_move)
+
+                    # Check if the file already exists in the destination folder
+                    while os.path.exists(destination_file_path):
+                        file_to_move = f"{base_name}_({counter}){ext}"
+                        destination_file_path = os.path.join(not_img_fld, file_to_move)
+                        counter += 1
+                    shutil.move(image_path, destination_file_path)
+                    logger.warning(
+                        f"Moved non-image file '{image_name}' to {not_img_fld} as {file_to_move}."
+                    )
+                except shutil.Error as e:
+                    logger.error(f"Error moving file '{image_path}' to 'Not Images': {e}.")
+                except Exception as e:
+                    logger.error(f"An expected error occurred while moving {image_name}: {e}")
 
         # Display the images processing time
         logger.info(
@@ -256,6 +276,22 @@ class ImagesDescriber:
             f"{processed_count} images processed, {unprocessed_count} unprocessed. "
             f"Images processing time is {time.perf_counter() - time_start:.2f} seconds."
         )
+
+    @staticmethod
+    def remove_backup_file(filename):
+        """
+        Remove the backup file created by the IPTCInfo library.
+
+        Args:
+            filename: path to the backup file has a '~' suffix.
+        """
+        backup_file_path = filename + '~'
+        if os.path.exists(backup_file_path):
+            try:
+                os.remove(backup_file_path)
+                logger.warning(f"Removed backup file: {backup_file_path}")
+            except Exception as e:
+                logger.error(f"Error removing backup file '{backup_file_path}': {e}")
 
     def __str__(self):
         """
