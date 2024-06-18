@@ -35,7 +35,7 @@
 
 ## Installation
 
-1. **Save the Script**: Save the script as `images_describer.py`.
+1. **Save the Project**: Save the project as `GPTImageDescriber`.
 2. **Install Dependencies**: Run the following command to install the required packages:
     ```bash
     pip install -r requirements.txt
@@ -46,25 +46,15 @@
 
 ## Usage
 
-Run the script from your command line, specifying the source folder containing your images. Optionally, you can specify a destination folder for the processed images.
-
+To run the image processing script, execute the following command in your terminal:
 ```bash
-python images_describer.py [source folder] [optional destination]
+python run_app.py
 ```
-
-### Example
-
-```bash
-python images_describer.py /mypics /modified
-```
-
-In this example, images from the `/mypics` folder will be processed, and the resulting images will be saved in the `/modified` folder.
-
 ---
 
 ## Configuration
 
-Create a `configurations.txt` file in the same directory as `images_describer.py`. This file should contain the necessary settings for handling images. Here’s a template:
+Edit a `configurations.txt` file in the root directory. This file should contain the necessary settings for handling images. Here’s a template:
 
 ```plaintext
 prompt=Describe the image and generate a title and keywords.
