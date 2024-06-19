@@ -1,7 +1,9 @@
 """Script to check if an image is locked by any process."""
 
+import os.path
 import platform
 import subprocess
+import time
 
 import psutil
 
@@ -11,6 +13,11 @@ from src.logging_config import setup_logger
 logger = setup_logger(__name__)
 
 
+def normalize_path(filepath):
+    """Normalize the file path for consistent comparison."""
+    return os.path.normcase(os.path.abspath(filepath))
+
+
 def terminate_processes_using_file(filepath):
     """
     Terminate all processes that are using a specific file.
@@ -18,10 +25,13 @@ def terminate_processes_using_file(filepath):
     Args:
         filepath: Path to the file to check and terminate processes for.
     """
+    # Get normalized path
+    normalized_path = normalize_path(filepath)
+
     if platform.system() == 'Darwin':  # macOS
-        processes = get_processes_using_file_mac(filepath)
+        processes = get_processes_using_file_mac(normalized_path)
     elif platform.system() == 'Windows':
-        processes = get_processes_using_file_windows(filepath)
+        processes = get_processes_using_file_windows(normalized_path)
     else:
         logger.error("Unsupported operating system.")
         return
@@ -29,6 +39,7 @@ def terminate_processes_using_file(filepath):
     if processes:
         for proc in processes:
             terminate_process(proc['pid'])
+            time.sleep(1)  # wait to ensure the process is terminated
     else:
         logger.info(f"No processes are using the file {filepath}.")
 
