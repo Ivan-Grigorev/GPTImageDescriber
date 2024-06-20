@@ -269,6 +269,9 @@ class ImagesDescriber:
                     logger.error(f"Error moving file '{image_path}' to 'Not Images': {e}.")
                 except Exception as e:
                     logger.error(f"An expected error occurred while moving {image_name}: {e}")
+                finally:
+                    # Ensure backup files are removed regardless of success or failure
+                    self.remove_backup_file(destination_path)
 
         # Display the images processing time
         process_time = time.perf_counter() - time_start
@@ -309,6 +312,9 @@ class ImagesDescriber:
         Args:
             filename: path to the backup file has a '~' suffix.
         """
+        if filename is None or filename.strip() == '':
+            logger.error(f"No valid filename provided to remove backup file.")
+
         backup_file_path = filename + '~'
         if os.path.exists(backup_file_path):
             try:
