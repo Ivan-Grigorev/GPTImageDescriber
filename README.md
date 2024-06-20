@@ -1,6 +1,6 @@
 # GPT Image Describer
 
-**Quickly add titles & keywords to your photos using AI!**
+**Quickly add titles, description & keywords to your photos using AI!**
 
 ---
 
@@ -9,9 +9,9 @@
 1. [Introduction](#introduction)
 2. [Features](#features)
 3. [Installation](#installation)
-4. [Usage](#usage)
-5. [Configuration](#configuration)
-6. [Example](#example)
+4. [Configuration](#configuration)
+5. [Example](#example)
+6. [Usage](#usage)
 7. [License](#license)
 8. [Credits](#credits)
 9. [Additional Notes](#additional-notes)
@@ -20,14 +20,14 @@
 
 ## Introduction
 
-**GPT Image Describer** is a Python-based tool that leverages OpenAI's GPT model to automatically generate SEO-optimized titles and keywords for your photos. This project is designed for quick personal use and is not intended for production environments.
+**GPT Image Describer** is a Python-based tool that leverages OpenAI's GPT model to automatically generate SEO-optimized titles, descriptions, and keywords for your photos. This project is designed for quick personal use and is not intended for production environments.
 
 ---
 
 ## Features
 
-- Generates SEO-friendly titles and keywords for images.
-- Supports popular image formats such as JPG, JPEG, and PNG.
+- Generates SEO-friendly titles, descriptions, and keywords for images.
+- Supports popular image formats such as JPG, JPEG.
 - Automatically adds metadata to the images.
 - Handles images from a specified source folder and saves the processed images to a destination folder.
 
@@ -35,12 +35,37 @@
 
 ## Installation
 
-1. **Save the Project**: Save the project as `GPTImageDescriber`.
-2. **Install Dependencies**: Run the following command to install the required packages:
+1. **Clone the Repository**: Start by cloning the repository to your local machine:
+    ```bash
+    git clone https://github.com/Ivan-Grigorev/GPTImageDescriber
+    ```
+2. **Navigate to the Project Directory**: Change your working directory to the cloned repository:
+    ```bash
+    cd GPTImageDescriber
+    ```
+3. **Install Dependencies**: Run the following command to install the required packages:
     ```bash
     pip install -r requirements.txt
     ```
-3. **Get OpenAI API Key**: Obtain your OpenAI API key from [OpenAI's website](https://openai.com/). Save the key in a file named `openai_key.txt` in the same directory as your script. **Keep this key secret and do not share it!**
+4. **Get OpenAI API Key**: Obtain your OpenAI API key from [OpenAI's website](https://openai.com/). Save the key in a file named `openai_key.txt` in the same directory as your script. **Keep this key secret and do not share it!**
+
+---
+
+## Configuration
+
+Edit a `configurations.txt` file in the root directory. This file should contain the necessary settings for handling images. Here’s a template:
+
+```plaintext
+prompt=Describe the image and generate a title and keywords.
+source_folder=/full/path/to/your/source/folder
+destination_folder=/full/path/to/your/destination/folder
+author=Your Name
+```
+
+- **prompt**: A prompt for generating titles, descriptions, and keywords using ChatGPT.
+- **source_folder**: The folder where your images are located.
+- **destination_folder**: The folder where the processed images will be saved. If not provided, images will be saved back to the source folder.
+- **author**: The name of the image's author or creator.
 
 ---
 
@@ -50,24 +75,6 @@ To run the image processing script, execute the following command in your termin
 ```bash
 python run_app.py
 ```
----
-
-## Configuration
-
-Edit a `configurations.txt` file in the root directory. This file should contain the necessary settings for handling images. Here’s a template:
-
-```plaintext
-prompt=Describe the image and generate a title and keywords.
-source_folder=/path/to/your/source/folder
-destination_folder=/path/to/your/destination/folder
-author=Your Name
-```
-
-- **prompt**: A prompt for generating titles, descriptions, and keywords using ChatGPT.
-- **source_folder**: The folder where your images are located.
-- **destination_folder**: The folder where the processed images will be saved. If not provided, images will be saved back to the source folder.
-- **author**: The name of the image's author or creator.
-
 ---
 
 ## License
@@ -108,5 +115,5 @@ This repository and project were created by [Ivan Grigorev](https://github.com/I
 
 - **Source Folder**: Ensure that the source folder contains only the images you want to process. The script will process all files with supported extensions.
 - **Destination Folder**: If no destination folder is specified, the processed images will be saved back in the source folder, overwriting the original files.
-- **Image Metadata**: The script uses the "ImageDescription" metadata field to store the generated titles and keywords.
+- **Image Metadata**: The script uses the "ImageDescription" metadata field to store the generated titles, descriptions, and keywords.
 - **Free OpenAI Tier**: Be aware that the free tier of OpenAI may have limitations on the number of requests you can make.
