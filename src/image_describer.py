@@ -114,7 +114,7 @@ class ImagesDescriber:
             },
             json=payload,
         )
-        print(response.json())
+        
         return response.json()
 
     def parse_response(self, image_file):
