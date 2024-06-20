@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -113,7 +114,7 @@ class ImagesDescriber:
             },
             json=payload,
         )
-
+        print(response.json())
         return response.json()
 
     def parse_response(self, image_file):
@@ -211,27 +212,36 @@ class ImagesDescriber:
 
                         # Open image and modify metadata
                         with Image.open(image_path) as img:
-                            # JPEG Metadata
+                            img.verify()  # verify image integrity
+
+                            # Ensure that only JPEG files are processed
                             if isinstance(img, JpegImagePlugin.JpegImageFile):
+
+                                # Create a temporary copy of the image
+                                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                                    temp_image_path = temp_file.name
+                                shutil.copyfile(image_path, temp_image_path)
+
                                 # Load IPTC metadata or create a new one
                                 try:
-                                    info = IPTCInfo(image_path)
+                                    info = IPTCInfo(temp_image_path)
                                 except Exception as e:
                                     logger.error(
                                         f"No IPTC metadata found, create a new one. Error: {e}"
                                     )
                                     info = IPTCInfo(None)
+
+                                # Modify metadata on the temporary file
                                 info['object name'] = title
                                 info['caption/abstract'] = description
                                 info['keywords'] = keywords
                                 info['by-line'] = self.author_name
-                                # Save the image with new IPTC metadata
-                                info.save_as(destination_path)
+
+                                # Save the modified metadata back to the temp file
+                                info.save_as(temp_image_path)
+                                shutil.move(temp_image_path, destination_path)
                                 logger.info(f"Metadata added to {image_name} (JPEG)")
                                 processed_count += 1
-
-                                # Remove backup file if it exists
-                                self.remove_backup_file(destination_path)
 
                             # Other image formats - move file without modification
                             else:
@@ -273,6 +283,10 @@ class ImagesDescriber:
                     # Ensure backup files are removed regardless of success or failure
                     self.remove_backup_file(destination_path)
 
+                    # Clean up temp file if it exists and is not needed
+                    if temp_image_path and os.path.exists(temp_image_path):
+                        os.remove(temp_image_path)
+
         # Display the images processing time
         process_time = time.perf_counter() - time_start
         if process_time < 60:
@@ -313,7 +327,8 @@ class ImagesDescriber:
             filename: path to the backup file has a '~' suffix.
         """
         if filename is None or filename.strip() == '':
-            logger.error(f"No valid filename provided to remove backup file.")
+            logger.error("No valid filename provided to remove backup file.")
+            return
 
         backup_file_path = filename + '~'
         if os.path.exists(backup_file_path):
