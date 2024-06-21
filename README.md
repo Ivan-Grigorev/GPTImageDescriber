@@ -56,7 +56,7 @@
 Edit a `configurations.txt` file in the root directory. This file should contain the necessary settings for handling images. Here’s a template:
 
 ```plaintext
-prompt=Describe the image and generate a title and keywords.
+prompt=Describe the image and generate a title, description, and keywords.
 source_folder=/full/path/to/your/source/folder
 destination_folder=/full/path/to/your/destination/folder
 author=Your Name
