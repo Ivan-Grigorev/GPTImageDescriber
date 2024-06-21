@@ -114,7 +114,7 @@ class ImagesDescriber:
             },
             json=payload,
         )
-        
+
         return response.json()
 
     def parse_response(self, image_file):
@@ -189,6 +189,10 @@ class ImagesDescriber:
             image_path = os.path.join(self.src_path, image_name)
             destination_path = os.path.join(self.dst_path, image_name)
 
+            # Ensure destination directory exists; create if it doesn't
+            if not os.path.exists(destination_path):
+                os.makedirs(self.dst_path, exist_ok=True)
+
             # Terminate processes using the image file
             terminate_processes_using_file(image_path)
 
@@ -243,12 +247,17 @@ class ImagesDescriber:
                                 logger.info(f"Metadata added to {image_name} (JPEG)")
                                 processed_count += 1
 
+                                # Remove the original file only if the edited copy
+                                # has been moved to another folder
+                                if image_path != destination_path:
+                                    os.remove(image_path)
+
                             # Other image formats - move file without modification
                             else:
-                                img.save(destination_path)
-                                logger.info(
-                                    f"Because the image format is not processed,"
-                                    f" {image_name} has been moved to {destination_path}."
+                                logger.warning(
+                                    f"Due to the unsupported ({str(image_name).upper().split('.')[-1]}) "
+                                    f"format, the file '{image_name}' left in the folder "
+                                    f"{os.path.dirname(destination_path)} without processing."
                                 )
 
                 except Exception as e:
