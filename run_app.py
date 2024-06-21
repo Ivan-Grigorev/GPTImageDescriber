@@ -1,6 +1,5 @@
 """Main script to run the image description project."""
 
-import os
 import sys
 
 from src.image_describer import ImagesDescriber
@@ -38,19 +37,11 @@ def main():
                 )
             }
 
-        # Get only the file names from the source folder
-        images_src_folder = configurations.get('source_folder')
-        src_images_files = [
-            f
-            for f in os.listdir(images_src_folder)
-            if os.path.isfile(os.path.join(images_src_folder, f)) and not f.startswith('.')
-        ]
-
         # Initialize ImagesDescriber with extracted configurations
         image_describer = ImagesDescriber(
             prompt=configurations.get('prompt'),
             src_path=configurations.get('source_folder'),
-            image_files=src_images_files,
+            image_files=configurations.get('source_folder'),
             dst_path=configurations.get('destination_folder'),
             author_name=configurations.get('author_name'),
         )
