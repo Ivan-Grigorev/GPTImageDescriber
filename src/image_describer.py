@@ -223,14 +223,14 @@ class ImagesDescriber:
                     logger.info(f"Metadata added to {image_name} (JPEG)")
                     processed_count += 1
 
-                    # Remove the original file only if the edited copy
-                    # has been moved to another folder
-                    if image_path != destination_path:
-                        os.remove(image_path)
-
             except Exception as e:
                 logger.error(f"Error adding metadata to {image_name}: {e}")
             finally:
+                # Remove the original file only if the edited copy
+                # has been moved to another folder
+                if image_path != destination_path:
+                    os.remove(image_path)
+
                 # Ensure backup files are removed regardless of success or failure
                 self.remove_backup_file(destination_path)
 
