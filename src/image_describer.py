@@ -7,13 +7,13 @@ import shutil
 import sys
 import tempfile
 import time
-from pathlib import Path
 
 import requests
 from iptcinfo3 import IPTCInfo
-from PIL import Image, JpegImagePlugin
+from PIL import Image
 
 from src.check_access import terminate_processes_using_file
+from src.files_filter import filter_files_by_extension
 from src.logging_config import setup_logger
 
 # Initialize logger using the setup function
@@ -170,22 +170,17 @@ class ImagesDescriber:
         # Record the start time of the process of handling the images
         time_start = time.perf_counter()
 
-        # Initialize counters for images
+        # Initialize counter for images
         processed_count = 0
-        unprocessed_count = 0
 
-        # Get number of files to process
-        files_num = len(
-            [
-                f
-                for f in os.listdir(self.src_path)
-                if os.path.isfile(os.path.join(self.src_path, f)) and not f.startswith('.')
-            ]
+        # Get filtered image files to process
+        filtered_image_files = filter_files_by_extension(src_path=self.image_files)
+        logger.info(
+            f"Images processing has started! {len(filtered_image_files)} images to process."
         )
-        logger.info(f"Images processing has started! {files_num} images to process.")
 
         # Get title and keywords for each image file
-        for image_name in self.image_files:
+        for image_name in filtered_image_files:
             image_path = os.path.join(self.src_path, image_name)
             destination_path = os.path.join(self.dst_path, image_name)
 
@@ -196,105 +191,55 @@ class ImagesDescriber:
             # Terminate processes using the image file
             terminate_processes_using_file(image_path)
 
-            # Check if the file is an image based on its extension
-            if image_name.lower().endswith(
-                (
-                    '.jpg',
-                    '.jpeg',
-                    '.png',
-                    '.gif',
-                    '.bmp',
-                    '.webp',
-                    '.tiff',
-                    '.ico',
-                    '.svg',
-                )
-            ) and os.path.isfile(image_path):
-                try:
-                    with open(image_path, 'rb') as image_file:
-                        title, description, keywords = self.parse_response(image_file=image_file)
+            try:
+                with open(image_path, 'rb') as image_file:
+                    title, description, keywords = self.parse_response(image_file=image_file)
 
-                        # Open image and modify metadata
-                        with Image.open(image_path) as img:
-                            img.verify()  # verify image integrity
+                    # Open image and modify metadata
+                    with Image.open(image_path) as img:
+                        img.verify()  # verify image integrity
 
-                            # Ensure that only JPEG files are processed
-                            if isinstance(img, JpegImagePlugin.JpegImageFile):
+                    # Create a temporary copy of the image
+                    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                        temp_image_path = temp_file.name
+                    shutil.copyfile(image_path, temp_image_path)
 
-                                # Create a temporary copy of the image
-                                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                                    temp_image_path = temp_file.name
-                                shutil.copyfile(image_path, temp_image_path)
+                    # Load IPTC metadata or create a new one
+                    try:
+                        info = IPTCInfo(temp_image_path)
+                    except Exception as e:
+                        logger.error(f"No IPTC metadata found, create a new one. Error: {e}")
+                        info = IPTCInfo(None)
 
-                                # Load IPTC metadata or create a new one
-                                try:
-                                    info = IPTCInfo(temp_image_path)
-                                except Exception as e:
-                                    logger.error(
-                                        f"No IPTC metadata found, create a new one. Error: {e}"
-                                    )
-                                    info = IPTCInfo(None)
+                    # Modify metadata on the temporary file
+                    info['object name'] = title
+                    info['caption/abstract'] = description
+                    info['keywords'] = keywords
+                    info['by-line'] = self.author_name
 
-                                # Modify metadata on the temporary file
-                                info['object name'] = title
-                                info['caption/abstract'] = description
-                                info['keywords'] = keywords
-                                info['by-line'] = self.author_name
+                    # Save the modified metadata back to the temp file
+                    info.save_as(temp_image_path)
+                    shutil.move(temp_image_path, destination_path)
+                    logger.info(f"Metadata added to {image_name} (JPEG)")
+                    processed_count += 1
 
-                                # Save the modified metadata back to the temp file
-                                info.save_as(temp_image_path)
-                                shutil.move(temp_image_path, destination_path)
-                                logger.info(f"Metadata added to {image_name} (JPEG)")
-                                processed_count += 1
+                    # Remove the original file only if the edited copy
+                    # has been moved to another folder
+                    if image_path != destination_path:
+                        os.remove(image_path)
 
-                                # Remove the original file only if the edited copy
-                                # has been moved to another folder
-                                if image_path != destination_path:
-                                    os.remove(image_path)
+            except Exception as e:
+                logger.error(f"Error adding metadata to {image_name}: {e}")
+            finally:
+                # Ensure backup files are removed regardless of success or failure
+                self.remove_backup_file(destination_path)
 
-                            # Other image formats - move file without modification
-                            else:
-                                logger.warning(
-                                    f"Due to the unsupported ({str(image_name).upper().split('.')[-1]}) "
-                                    f"format, the file '{image_name}' left in the folder "
-                                    f"{os.path.dirname(destination_path)} without processing."
-                                )
+                # Clean up temp file if it exists and is not needed
+                if temp_image_path and os.path.exists(temp_image_path):
+                    os.remove(temp_image_path)
 
-                except Exception as e:
-                    logger.error(f"Error adding metadata to {image_name}: {e}")
-                    unprocessed_count += 1
-            else:
-                # Move non-image files to the 'Not_Images' folder
-                try:
-                    not_img_fld = os.path.join(self.dst_path, 'Not_Images')
-                    Path(not_img_fld).mkdir(parents=True, exist_ok=True)
-
-                    # Separate the filename and extension
-                    base_name, ext = os.path.splitext(image_name)
-                    counter = 1
-                    file_to_move = image_name
-                    destination_file_path = os.path.join(not_img_fld, file_to_move)
-
-                    # Check if the file already exists in the destination folder
-                    while os.path.exists(destination_file_path):
-                        file_to_move = f"{base_name}_({counter}){ext}"
-                        destination_file_path = os.path.join(not_img_fld, file_to_move)
-                        counter += 1
-                    shutil.move(image_path, destination_file_path)
-                    logger.warning(
-                        f"Moved non-image file '{image_name}' to {not_img_fld} as {file_to_move}."
-                    )
-                except shutil.Error as e:
-                    logger.error(f"Error moving file '{image_path}' to 'Not Images': {e}.")
-                except Exception as e:
-                    logger.error(f"An expected error occurred while moving {image_name}: {e}")
-                finally:
-                    # Ensure backup files are removed regardless of success or failure
-                    self.remove_backup_file(destination_path)
-
-                    # Clean up temp file if it exists and is not needed
-                    if temp_image_path and os.path.exists(temp_image_path):
-                        os.remove(temp_image_path)
+        # Calculate the number of unprocessed images
+        unprocessed_count = len(filtered_image_files) - processed_count
 
         # Display the images processing time
         process_time = time.perf_counter() - time_start
