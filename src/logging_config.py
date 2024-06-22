@@ -14,25 +14,33 @@ log_colors = {
 }
 
 # Custom formatter with colored output
-formatter = ColoredFormatter(
+detailed_formatter = ColoredFormatter(
     '%(log_color)s%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%d/%m/%Y %H:%M:%S',
     log_colors=log_colors,
 )
 
+# Custom formatter with colored output for simple messages
+simple_formatter = ColoredFormatter('%(log_color)s%(message)s', log_colors=log_colors)
 
-def setup_logger(logger_name):
+
+def setup_logger(logger_name, use_simple_formatter=False):
     """
     Set up a logger instance with the specified name using the configured ColoredFormatter.
 
     Args:
         logger_name (str): The name of the logger instance.
+        use_simple_formatter (bool): Whether to use the simple formatter.
 
     Returns:
         logging.Logger: The configured logger instance.
     """
     handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
+
+    if use_simple_formatter:
+        handler.setFormatter(simple_formatter)
+    else:
+        handler.setFormatter(detailed_formatter)
 
     logger = logging.getLogger(logger_name)
     logger.addHandler(handler)
