@@ -220,7 +220,10 @@ class ImagesDescriber:
                     # Save the modified metadata back to the temp file
                     info.save_as(temp_image_path)
                     shutil.move(temp_image_path, destination_path)
-                    logger.info(f"Metadata added to {image_name} (JPEG)")
+                    logger.info(
+                        f"Metadata added to {image_name} (JPEG) "
+                        f"{'and moved to ' + os.path.dirname(destination_path) if destination_path != image_path else ''}"
+                    )
                     processed_count += 1
 
             except Exception as e:
