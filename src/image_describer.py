@@ -147,7 +147,7 @@ class ImagesDescriber:
         translation_table = str.maketrans('', '', string.punctuation + string.digits)
 
         # Get the values by slicing
-        title_start = title_index + len('Title:')
+        title_start = title_index + len('Title')
         title = (
             content[title_start:description_index].translate(translation_table).strip()
             if title_index != -1
@@ -161,7 +161,7 @@ class ImagesDescriber:
             else 'No Description'
         )
 
-        keywords_start = keywords_index + len('Keywords:')
+        keywords_start = keywords_index + len('Keywords')
         keywords = (
             content[keywords_start:].translate(translation_table).lower().split()
             if keywords_index != -1
