@@ -2,8 +2,8 @@
 
 import base64
 import os
-import re
 import shutil
+import string
 import sys
 import tempfile
 import time
@@ -113,53 +113,62 @@ class ImagesDescriber:
                 'Authorization': f"Bearer {API_KEY}",
             },
             json=payload,
-        )
+        ).json()
 
-        return response.json()
+        # Get cleaned data from GPT response
+        title, description, keywords = self.parse_response(response)
 
-    def parse_response(self, image_file):
+        return title, description, keywords
+
+    def parse_response(self, gpt_response):
         """
-        Parse the GPT-4 response to extract the title, description, and keywords for a given image file.
+        Parse the GPT-4 response to extract the title, description, and keywords.
 
         Args:
-            image_file (file object): The image file whose GPT-4 response is to be parsed.
+            gpt_response (dict): The GPT-4 response is to be parsed.
 
         Returns:
             tuple: A tuple containing the title (str), description (str), and keywords (list) extracted from the GPT-4 response.
         """
-        response_data = self.process_photo(image_file)
-
         # Check if there is an error in the ChatGPT response
-        if 'error' in response_data.keys():
-            logger.error(f"{response_data.get('error')['message']}")
+        if 'error' in gpt_response.keys():
+            logger.error(f"{gpt_response.get('error')['message']}")
             sys.exit(1)
 
-        content = response_data['choices'][0].get('message').get('content')
+        # Extract the content from the response
+        content = gpt_response['choices'][0].get('message').get('content')
 
-        # Extract title
-        title_match = re.search(r'\*\*Title:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE)
-        title = title_match.group(1).strip().replace(":", "") if title_match else "No Title"
+        # Find the indexes of 'Title', 'Description', and 'Keywords'
+        title_index = content.find('Title')
+        description_index = content.find('Description')
+        keywords_index = content.find('Keywords')
 
-        # Extract description
-        description_match = re.search(
-            r'\*\*Description:\*\*["\n\s]*(.*?)(?=["\n])', content, re.IGNORECASE
+        # Define a translation table to map non-letter characters to None
+        translation_table = str.maketrans('', '', string.punctuation + string.digits)
+
+        # Get the values by slicing
+        title_start = title_index + len('Title:')
+        title = (
+            content[title_start:description_index].translate(translation_table).strip()
+            if title_index != -1
+            else 'No Title'
         )
+
+        description_start = description_index + len('Description')
         description = (
-            description_match.group(1).strip().replace(":", "")
-            if description_match
-            else "No Description"
+            content[description_start:keywords_index].translate(translation_table).strip()
+            if description_index != -1
+            else 'No Description'
         )
 
-        # Extract keywords
-        keywords_match = re.search(r'\*\*Keywords:\*\*[\s\n]*([^\*]*)', content, re.IGNORECASE)
-        if keywords_match:
-            keywords_text = keywords_match.group(1).strip()
-            # Clean the keywords by removing numbers and any other unwanted characters
-            keywords_list = re.sub(r'\d+\.?', '', keywords_text).replace(",", " ").lower().split()
-        else:
-            keywords_list = "No Keywords"
+        keywords_start = keywords_index + len('Keywords:')
+        keywords = (
+            content[keywords_start:].translate(translation_table).lower().split()
+            if keywords_index != -1
+            else []
+        )
 
-        return title, description, keywords_list
+        return title, description, keywords
 
     def add_metadata(self):
         """
@@ -193,7 +202,8 @@ class ImagesDescriber:
 
             try:
                 with open(image_path, 'rb') as image_file:
-                    title, description, keywords = self.parse_response(image_file=image_file)
+                    # Get data from GPT response
+                    title, description, keywords = self.process_photo(image_file=image_file)
 
                     # Open image and modify metadata
                     with Image.open(image_path) as img:
