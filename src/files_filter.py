@@ -23,7 +23,7 @@ def filter_files_by_extension(src_path: Union[str, List[str]]) -> List[str]:
     Returns:
         List of filtered image file names.
     """
-    logger.info(f"Starting to filter files by image types in the source folder(s): {src_path}")
+    logger.info("Starting to filter files by image types in the source folder.")
 
     filtered_files = []
 
@@ -87,6 +87,6 @@ def filter_files_by_extension(src_path: Union[str, List[str]]) -> List[str]:
             except Exception as e:
                 logger.error(f"An expected error occurred while moving {image_name}: {e}")
 
-    logger.info(f"Finished filtering files by image types in the source folder(s): {src_path}")
+    logger.info("Finished filtering files by image types in the source folder.")
 
     return filtered_files
