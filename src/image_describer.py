@@ -9,7 +9,6 @@ import time
 
 import requests
 from iptcinfo3 import IPTCInfo
-from PIL import Image
 
 from src.check_access import terminate_processes_using_file
 from src.files_filter import filter_files_by_extension
@@ -150,10 +149,6 @@ class ImagesDescriber:
                 with open(image_path, 'rb') as image_file:
                     # Get data from GPT response
                     title, description, keywords = self.process_photo(image_file=image_file)
-
-                    # Open image and modify metadata
-                    with Image.open(image_path) as img:
-                        img.verify()  # verify image integrity
 
                     # Create a temporary copy of the image
                     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
