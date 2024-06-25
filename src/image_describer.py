@@ -3,7 +3,6 @@
 import base64
 import os
 import shutil
-import string
 import sys
 import tempfile
 import time
@@ -15,6 +14,7 @@ from PIL import Image
 from src.check_access import terminate_processes_using_file
 from src.files_filter import filter_files_by_extension
 from src.logging_config import setup_logger
+from src.response_parser import parse_response
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)
@@ -46,10 +46,6 @@ class ImagesDescriber:
         process_photo(image_file):
             Processes a given image file to generate a title, description, and keywords using ChatGPT-4.
             Returns a dictionary containing the generated title and keywords.
-
-        parse_response(image_file):
-            Parses the GPT-4 response to extract the title, description, and keywords for a given image.
-            Returns a tuple containing the parsed title, description, and keywords.
 
         add_metadata():
             Adds processed titles, descriptions, and keywords to the metadata of the images in the source directory.
@@ -116,57 +112,7 @@ class ImagesDescriber:
         ).json()
 
         # Get cleaned data from GPT response
-        title, description, keywords = self.parse_response(response)
-
-        return title, description, keywords
-
-    def parse_response(self, gpt_response):
-        """
-        Parse the GPT-4 response to extract the title, description, and keywords.
-
-        Args:
-            gpt_response (dict): The GPT-4 response is to be parsed.
-
-        Returns:
-            tuple: A tuple containing the title (str), description (str), and keywords (list) extracted from the GPT-4 response.
-        """
-        # Check if there is an error in the ChatGPT response
-        if 'error' in gpt_response.keys():
-            logger.error(f"{gpt_response.get('error')['message']}")
-            sys.exit(1)
-
-        # Extract the content from the response
-        content = gpt_response['choices'][0].get('message').get('content')
-
-        # Find the indexes of 'Title', 'Description', and 'Keywords'
-        title_index = content.find('Title')
-        description_index = content.find('Description')
-        keywords_index = content.find('Keywords')
-
-        # Define a translation table to map non-letter characters to None
-        translation_table = str.maketrans('', '', string.punctuation + string.digits)
-
-        # Get the values by slicing
-        title_start = title_index + len('Title')
-        title = (
-            content[title_start:description_index].translate(translation_table).strip()
-            if title_index != -1
-            else 'No Title'
-        )
-
-        description_start = description_index + len('Description')
-        description = (
-            content[description_start:keywords_index].translate(translation_table).strip()
-            if description_index != -1
-            else 'No Description'
-        )
-
-        keywords_start = keywords_index + len('Keywords')
-        keywords = (
-            content[keywords_start:].translate(translation_table).lower().split()
-            if keywords_index != -1
-            else []
-        )
+        title, description, keywords = parse_response(response)
 
         return title, description, keywords
 
