@@ -1,8 +1,8 @@
 """This module parses the GPT-4 response to extract the title, description, and keywords."""
 
+import re
 import string
 import sys
-import re
 
 from src.logging_config import setup_logger
 
