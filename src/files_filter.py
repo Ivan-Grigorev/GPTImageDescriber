@@ -65,7 +65,6 @@ def move_non_image_format(image_name: str, image_path: str, src_path: str):
         image_name (str): Name of the file to move.
         image_path (str): Path of the file to move.
         src_path (str): Source directory path.
-
     """
     try:
         # Create 'Not_Images' folder
