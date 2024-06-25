@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import List, Union
 
@@ -23,16 +24,25 @@ def filter_files_by_extension(src_path: Union[str, List[str]]) -> List[str]:
     Returns:
         List of filtered image file names.
     """
+    # Check if any file exists in source folder
+    src_fld_files = [
+        f
+        for f in os.listdir(src_path)
+        if os.path.isfile(os.path.join(src_path, f)) and not f.startswith('.')  # skip hidden files
+    ]
+    if not src_fld_files:
+        logger.warning(
+            f"No files found in the source folder '{src_path}' to process.\n"
+            f"Please verify and try again."
+        )
+        sys.exit(1)
+
     logger.info("Starting to filter files by image types in the source folder.")
 
     image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.ico', '.svg'}
     filtered_files = []
 
-    for image_name in (
-        f
-        for f in os.listdir(src_path)
-        if os.path.isfile(os.path.join(src_path, f)) and not f.startswith('.')  # skip hidden files
-    ):
+    for image_name in src_fld_files:
         image_path = os.path.join(src_path, image_name)
 
         # Check if the file is an image based on its extension
