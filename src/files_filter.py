@@ -68,6 +68,7 @@ def move_non_image_format(image_name: str, image_path: str, src_path: str):
 
     """
     try:
+        # Create 'Not_Images' folder
         not_img_fld = os.path.join(src_path, 'Not_Images')
         Path(not_img_fld).mkdir(parents=True, exist_ok=True)
 
