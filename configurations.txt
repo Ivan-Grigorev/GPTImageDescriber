@@ -1,14 +1,14 @@
 # Configuration settings for processing function
 
-# The prompt message to ChatGPT
-prompt = Title: Length: Ensure the title is no longer than 180 characters. Description: Length: Ensure the description is no longer than 180 characters. The title should be descriptive and provide a clear idea of the image content. Specificity: Include specific details relevant to the image, avoiding generic terms. Keywords: Incorporate primary keywords naturally within the title. SEO Optimization: Use trending and relevant keywords to enhance visibility. Description: Length: Keep the description concise, no longer than 1-2 sentences. Clarity: Clearly describe the main elements and subject of the image. Details: Include specific and relevant details to provide context. Engagement: Use engaging language to attract potential buyers. Avoid Redundancy: Do not repeat information already included in the title. Keywords: Quantity: Provide exactly 49 keywords. SEO Optimization: Use trending and relevant keywords. Individual Words: Use single words rather than phrases to maximize SEO. Uniqueness: Ensure each keyword is unique, avoiding duplication. Relevance: Include keywords relevant to the image content and theme. Order: List the primary object and main theme first. Exclusions: Exclude the words 'photo', 'photography', 'illustration', '3D', and 'isolated'. Themes: Focus on relevant themes such as orthomolecular medicine, vegetarianism, keto diet, and other specified topics. Holidays: Include keywords related to relevant holidays or events, as specified.
+# Prompt message to ChatGPT for generating title, description, and keywords
+prompt = Create the title, description, and approximately 20 keywords for this picture.
 
-# Path to the source folder with photos to be processed
-source_folder = /Users/a1/Downloads/Images
+# Path to the source folder containing images to be processed
+source_folder = /path/to/your/images/folder
 
 # Path to the destination folder for processed photos
 # If not provided, the processed photos will be saved in the source folder
 destination_folder =
 
 # The author name of the images
-author_name = Tetiana Kreminska
+author_name = Firstname Lastname
