@@ -1,4 +1,4 @@
-"""Adds metadata to images."""
+"""This module processes images by generating descriptive metadata using GPT and adds the metadata to images."""
 
 import os
 import shutil
@@ -23,12 +23,11 @@ class ImagesDescriber:
     Attributes:
         prompt (str): The prompt to be sent to the GPT model for generating descriptions.
         src_path (str): The source directory containing the images to be processed.
-        image_files (list): List of image file names to be processed.
-        dst_path (str): The destination directory for saving the processed images.
-        author_name (str): The author name of images.
+        dst_path (str): The destination directory for saving the processed images. If not provided, defaults to src_path.
+        author_name (str): The author name of the images.
 
     Methods:
-        __init__.py(prompt, src_path, image_files, dst_path):
+        __init__(prompt, src_path, dst_path, author_name):
             Initializes the ImagesDescriber with the specified parameters.
 
         add_metadata():
@@ -43,19 +42,18 @@ class ImagesDescriber:
             Returns a string representation of the ImagesDescriber instance.
     """
 
-    def __init__(self, prompt, src_path, image_files, dst_path, author_name):
+    def __init__(self, prompt, src_path, dst_path, author_name):
         """
-        Initialize the ImagesDescriber with a prompt, source path, list of image files, and destination path.
+        Initialize the ImagesDescriber with a prompt, source path, destination path, and author name.
 
         Args:
             prompt (str): The prompt to be sent to the GPT model for generating descriptions.
             src_path (str): The path to the directory containing the images to be processed.
-            image_files (list): A list of image file names to be processed.
             dst_path (str): The path to the directory where processed images will be saved. Defaults to src_path if not provided.
+            author_name (str): The name of the author for the images.
         """
         self.prompt = prompt
         self.src_path = src_path
-        self.image_files = image_files
         self.dst_path = dst_path if dst_path else src_path
         self.author_name = author_name
 
@@ -72,12 +70,12 @@ class ImagesDescriber:
         processed_count = 0
 
         # Get filtered image files to process
-        filtered_image_files = filter_files_by_extension(src_path=self.image_files)
+        filtered_image_files = filter_files_by_extension(src_path=self.src_path)
         logger.info(
             f"Images processing has started! {len(filtered_image_files)} images to process."
         )
 
-        # Get title and keywords for each image file
+        # Get title, description, and keywords for each image file
         for image_name in filtered_image_files:
             image_path = os.path.join(self.src_path, image_name)
             destination_path = os.path.join(self.dst_path, image_name)
@@ -203,7 +201,6 @@ class ImagesDescriber:
             f"ImagesDescriber(\n"
             f"\tprompt={self.prompt},\n"
             f"\tsrc_path={self.src_path},\n"
-            f"\timage_files={self.image_files},\n"
             f"\tdst_path={self.dst_path},\n"
             f"\tauthor_name={self.author_name}\n"
             f")"
