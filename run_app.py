@@ -1,7 +1,8 @@
-"""Main script to run the image description project."""
+"""Main script to execute the image description and metadata generation project."""
 
 import sys
 
+from src.csv_generator import CSVGenerator
 from src.image_describer import ImagesDescriber
 from src.logging_config import setup_logger
 
@@ -11,28 +12,29 @@ logger = setup_logger(__name__)
 
 def main():
     """
-    Read configurations from 'configurations.txt' to describe images located in a specified source folder.
+    Read configuration settings from 'configurations.txt' and provides two options for processing images.
 
-    The extracted configurations are passed to the ImagesDescriber class,
-    which processes the images by adding metadata and saving them to a destination folder.
+    1. Add metadata directly to image files and save them to a destination folder.
+    2. Generate a CSV file containing image names, titles, descriptions, and keywords without modifying the images.
 
     Configuration File ('configurations.txt'):
-        - Expected format: key=value
+        - Format: key=value
         - Example:
             prompt=Describe this image.
             source_folder=/path/to/source
             destination_folder=/path/to/destination
             author_name=Firstname Lastname
 
-    User Confirmation:
-        - Before processing begins, the user is prompted to confirm the folder paths.
-        - The script provides detailed messages about the source and destination folders.
-        - If the source and destination folders are the same, a warning is issued about potential overwriting.
-        - The user must confirm (Y) or cancel (N) the process to proceed.
+    Process Overview:
+        - The script reads the configuration file for the image source folder, destination folder, and a prompt for generating descriptions.
+        - The user is asked to confirm the source and destination folders.
+        - The user selects between adding metadata to images (Option 1) or generating a CSV (Option 2).
+        - Detailed logs are provided throughout the process.
 
     Dependencies:
-        - ImagesDescriber: Class responsible for describing images.
-        - setup_logger: A function to configure and obtain a logger instance.
+        - CSVGenerator: Handles CSV file generation from image descriptions.
+        - ImagesDescriber: Processes and embeds metadata in images using GPT.
+        - setup_logger: Configures and initializes the logging system.
     """
     try:
         # Extract settings from the configurations file
@@ -43,15 +45,6 @@ def main():
                     line.split('=', 1) for line in f if line.strip() and not line.startswith('#')
                 )
             }
-
-        # Initialize ImagesDescriber with extracted configurations
-        image_describer = ImagesDescriber(
-            prompt=configurations.get('prompt'),
-            src_path=configurations.get('source_folder'),
-            image_files=configurations.get('source_folder'),
-            dst_path=configurations.get('destination_folder'),
-            author_name=configurations.get('author_name'),
-        )
 
         src_folder = configurations.get('source_folder')
         dst_folder = configurations.get('destination_folder')
@@ -92,15 +85,44 @@ def main():
                 "overwriting existing metadata."
             )
 
-        # User confirmation loop
+        # User confirmation and option choosing loop
+        simple_logger.info(
+            'The application provides you the option to handle your images with two choices:\n'
+            'Option 1: Fully describe all images in the source folder with ChatGPT,\n'
+            'add metadata to the images, and save them into the destination folder.\n'
+            'Option 2: Only describe all images in the source folder with ChatGPT,\n'
+            'create a CSV file with titles, descriptions, and keywords, then\n'
+            'save the CSV file to the destination folder.'
+        )
         while True:
             user_confirmation = (
-                input('Do you confirm the starting of the process? (Y/N)\n>>> ').strip().lower()
+                input(
+                    'Confirm the start of the process by choosing option 1 or 2\n'
+                    'or cancel the process by entering (N)\n>>> '
+                )
+                .strip()
+                .lower()
             )
 
-            if user_confirmation == 'y':
+            if user_confirmation == '1':
                 # Proceed with adding metadata
+                # Initialize ImagesDescriber with extracted configurations
+                image_describer = ImagesDescriber(
+                    prompt=configurations.get('prompt'),
+                    src_path=src_folder,
+                    dst_path=dst_folder,
+                    author_name=configurations.get('author_name'),
+                )
                 image_describer.add_metadata()
+                break
+            elif user_confirmation == '2':
+                # Proceed with only CSV file creation
+                csv_generator = CSVGenerator(
+                    prompt=configurations.get('prompt'),
+                    src_path=src_folder,
+                    dst_path=dst_folder,
+                )
+                csv_generator.write_data_to_csv()
                 break
             elif user_confirmation == 'n':
                 logger.info(
@@ -110,7 +132,8 @@ def main():
                 sys.exit(1)
             else:
                 logger.warning(
-                    f"Unrecognized input: '{user_confirmation}'. Please enter 'Y' for Yes or 'N' for No."
+                    f"Unrecognized input: '{user_confirmation}'. "
+                    f"Please enter '1' for Option 1, '2' for Option 2, or 'N' to cancel."
                 )
 
     except FileNotFoundError as e:
