@@ -4,22 +4,27 @@ import re
 import string
 import sys
 
+from src.chatgpt_responder import process_photo
 from src.logging_config import setup_logger
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)
 
 
-def parse_response(gpt_response):
+def parse_response(image_file, prompt):
     """
     Parse the GPT-4 response to extract the title, description, and keywords.
 
     Args:
-        gpt_response (dict): The GPT-4 response is to be parsed.
+        image_file: An image file name to be processed.
+        prompt (str): The prompt to be sent to the GPT model for generating descriptions.
 
     Returns:
         tuple: A tuple containing the title (str), description (str), and keywords (list) extracted from the GPT-4 response.
     """
+    # Get ChatGPT response
+    gpt_response = process_photo(image_file=image_file, prompt=prompt)
+
     # Check if there is an error in the ChatGPT response
     if 'error' in gpt_response.keys():
         logger.error(f"{gpt_response.get('error')['message']}")
