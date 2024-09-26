@@ -1,4 +1,4 @@
-"""Describes images using OpenAI's GPT model."""
+"""This module describes images using OpenAI's GPT model."""
 
 import base64
 import sys
