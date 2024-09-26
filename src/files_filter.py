@@ -4,7 +4,6 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import List, Union
 
 from PIL import Image, JpegImagePlugin
 
@@ -14,12 +13,12 @@ from src.logging_config import setup_logger
 logger = setup_logger(__name__)
 
 
-def filter_files_by_extension(src_path: Union[str, List[str]]) -> List[str]:
+def filter_files_by_extension(src_path):
     """
     Filter files by image extensions. Non-image files are moved to a 'Not_Images' folder.
 
     Args:
-        src_path: Path to source directory or a list of files.
+        src_path (str): Path to source directory.
 
     Returns:
         List of filtered image file names.
@@ -63,11 +62,11 @@ def filter_files_by_extension(src_path: Union[str, List[str]]) -> List[str]:
                     )
         else:
             move_non_image_format(image_name, image_path, src_path)
-        logger.info("Finished filtering files by image types in the source folder.")
-        return filtered_files
+    logger.info("Finished filtering files by image types in the source folder.")
+    return filtered_files
 
 
-def move_non_image_format(image_name: str, image_path: str, src_path: str):
+def move_non_image_format(image_name, image_path, src_path):
     """
     Move a non-image file to the 'Not_Images' folder, handling name conflicts.
 
