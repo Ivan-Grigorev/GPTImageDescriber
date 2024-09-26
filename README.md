@@ -29,7 +29,8 @@
 - Generates SEO-friendly titles, descriptions, and keywords for images.
 - Supports popular image formats such as JPG, JPEG.
 - Automatically adds metadata to the images.
-- Handles images from a specified source folder and saves the processed images to a destination folder.
+- Generates a CSV file containing image names, titles, descriptions, and keywords.
+- Handles images from a specified source folder and saves the processed images or CSV file to a destination folder.
 
 ---
 
@@ -64,7 +65,7 @@ author=Your Name
 
 - **prompt**: A prompt for generating titles, descriptions, and keywords using ChatGPT.
 - **source_folder**: The folder where your images are located.
-- **destination_folder**: The folder where the processed images will be saved. If not provided, images will be saved back to the source folder.
+- **destination_folder**: The folder where the processed images or CSV file will be saved. If not provided, files will be saved back to the source folder.
 - **author**: The name of the image's author or creator.
 
 ---
@@ -72,9 +73,33 @@ author=Your Name
 ## Usage
 
 To run the image processing script, execute the following command in your terminal:
+
 ```bash
 python run_app.py
 ```
+
+### Processing Options
+
+Upon running the script, you will be prompted to choose between two options:
+
+1. **Option 1: Add Metadata to Images**  
+   This option uses GPT to generate titles, descriptions, and keywords for your images and directly adds them as metadata to the image files. Processed images are saved to the destination folder.
+
+2. **Option 2: Generate CSV File Only**  
+   This option uses GPT to generate titles, descriptions, and keywords for your images but does not modify the image files. Instead, it creates a CSV file containing the image names, titles, descriptions, and keywords, and saves it in the destination folder.
+
+### Example CSV Output
+
+When you select **Option 2**, the CSV file will have the following format:
+
+```csv
+image_name,title,description,keywords
+image1.jpg,Sunset on the Beach,A serene sunset over the ocean,...,sunset,beach,serenity
+image2.jpg,Mountain Peaks,High snow-capped mountains under a clear sky,...,mountain,snow,adventure
+```
+
+The CSV file is named with the current date and time and saved in the destination folder.
+
 ---
 
 ## License
@@ -114,6 +139,6 @@ This repository and project were created by [Ivan Grigorev](https://github.com/I
 ## Additional Notes
 
 - **Source Folder**: Ensure that the source folder contains only the images you want to process. The script will process all files with supported extensions.
-- **Destination Folder**: If no destination folder is specified, the processed images will be saved back in the source folder, overwriting the original files.
-- **Image Metadata**: The script uses the "ImageDescription" metadata field to store the generated titles, descriptions, and keywords.
+- **Destination Folder**: If no destination folder is specified, the processed images or CSV file will be saved back in the source folder.
+- **Image Metadata**: When using **Option 1**, the script uses the "ImageDescription" metadata field to store the generated titles, descriptions, and keywords. When using **Option 2**, the data is saved into a CSV file.
 - **Free OpenAI Tier**: Be aware that the free tier of OpenAI may have limitations on the number of requests you can make.
