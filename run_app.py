@@ -52,7 +52,7 @@ def main():
         # Request process confirmation from user
         simple_logger = setup_logger('simple_logger', use_simple_formatter=True)
         logger.info(
-            "\n\n--- Images Describer with ChatGPT ---\n\n"
+            "\n========== Images Describer with ChatGPT ==========\n"
             "You are about to begin the process of adding metadata to your images.\n"
             "Please confirm the folder paths specified in 'configurations.txt' file:"
         )
@@ -88,17 +88,17 @@ def main():
         # User confirmation and option choosing loop
         simple_logger.info(
             'The application provides you the option to handle your images with two choices:\n'
-            'Option 1: Fully describe all images in the source folder with ChatGPT,\n'
+            'Option 1: Fully describe all images in the source folder with ChatGPT, '
             'add metadata to the images, and save them into the destination folder.\n'
-            'Option 2: Only describe all images in the source folder with ChatGPT,\n'
-            'create a CSV file with titles, descriptions, and keywords, then\n'
+            'Option 2: Only describe all images in the source folder with ChatGPT, '
+            'create a CSV file with titles, descriptions, and keywords, then '
             'save the CSV file to the destination folder.'
         )
         while True:
             user_confirmation = (
                 input(
-                    'Confirm the start of the process by choosing option 1 or 2\n'
-                    'or cancel the process by entering (N)\n>>> '
+                    'Confirm the start of the process by choosing option 1 or 2, '
+                    'or cancel the process by entering (N):\n>>> '
                 )
                 .strip()
                 .lower()
@@ -106,7 +106,6 @@ def main():
 
             if user_confirmation == '1':
                 # Proceed with adding metadata
-                # Initialize ImagesDescriber with extracted configurations
                 image_describer = ImagesDescriber(
                     prompt=configurations.get('prompt'),
                     src_path=src_folder,
@@ -126,8 +125,8 @@ def main():
                 break
             elif user_confirmation == 'n':
                 logger.info(
-                    "You have chosen to cancel the process.\n"
-                    f"The operation has been halted.\nAll images in the folder '{src_folder}' remain unchanged."
+                    "You have chosen to cancel the process. "
+                    f"The operation has been halted. All images in the folder '{src_folder}' remain unchanged."
                 )
                 sys.exit(1)
             else:
