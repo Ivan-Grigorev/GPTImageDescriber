@@ -2,6 +2,7 @@
 
 import base64
 import sys
+from typing import Optional
 
 import requests
 
@@ -19,19 +20,28 @@ except FileNotFoundError as e:
     sys.exit(1)
 
 
-def process_photo(image_file, prompt):
+def process_photo(image_file, prompt, image_caption: Optional[str] = None):
     """
     Process a given photo to generate a title, description, and keywords with ChatGPT-4.
 
     Args:
         image_file (file object): The image file to be processed.
         prompt (str): The prompt to be sent to the GPT model for generating descriptions.
+        image_caption (Optional[str]): The caption from image metadata, if available.
 
     Returns:
          dict: A JSON object containing the generated title, description, and keywords.
     """
     # Convert the image to a based64 string
     image_base64 = base64.b64encode(image_file.read()).decode('ascii')
+
+    # Create a general prompt for ChatGPT
+    if image_caption:
+        gen_prompt = (
+            f"{prompt}. Use the following context to enhance your response: {image_caption}"
+        )
+    else:
+        gen_prompt = prompt
 
     # Use GPT-4 by creating a prompt to generate a title, description, and keywords
     payload = {
@@ -40,7 +50,7 @@ def process_photo(image_file, prompt):
             {
                 'role': 'user',
                 'content': [
-                    {'type': 'text', 'text': prompt},
+                    {'type': 'text', 'text': gen_prompt},
                     {
                         'type': 'image_url',
                         'image_url': {'url': f"data:image/jpeg;base64,{image_base64}"},
