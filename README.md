@@ -69,13 +69,13 @@ python run_app.py
 
 Upon running the script, you will be prompted to choose between three options:
 
-1. **Option 1: Add Metadata to Images**  
+1. **Option 1: Add Metadata to Images**
    This option uses GPT to generate titles, descriptions, and keywords for your images and directly adds them as metadata to the image files. Processed images are saved to the destination folder.
 
-2. **Option 2: Generate CSV File**  
+2. **Option 2: Generate CSV File**
    This option uses GPT to generate titles, descriptions, and keywords for your images but does not modify the image files. Instead, it creates a CSV file containing the image names, titles, descriptions, and keywords, and saves it in the destination folder.
 
-3. **Option 3: Generate CSV File with Metadata Captions**  
+3. **Option 3: Generate CSV File with Metadata Captions**
    This option uses GPT to generate titles, descriptions, and keywords for your images without modifying the image files. In addition to the standard prompt, GPT leverages the existing captions found in the image metadata to generate a more tailored description. The output CSV file, containing image names, titles, descriptions, and keywords, is saved in the destination folder.
 
 ## Example CSV Output
