@@ -5,9 +5,10 @@ import os
 import time
 from datetime import datetime
 
-from src.files_filter import filter_files_by_extension
-from src.logging_config import setup_logger
-from src.response_parser import parse_response
+from src.services.files_filter import filter_files_by_extension
+from src.services.logging_config import setup_logger
+from src.services.process_timer import execution_timer
+from src.services.response_parser import parse_response
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)
@@ -108,34 +109,13 @@ class CSVGenerator:
 
         # Display the images processing time
         process_time = time.perf_counter() - time_start
-        if process_time < 60:
-            # Display process time in seconds
-            logger.info(
-                f"Processing complete: "
-                f"{processed_count} images processed, {unprocessed_count} unprocessed. "
-                f"Images processing time is {process_time:.2f} seconds."
-            )
-        elif 60 < process_time < 3600:
-            # Display process time in minutes and seconds
-            process_minutes = process_time // 60
-            process_seconds = process_time % 60
-            logger.info(
-                f"Processing complete: "
-                f"{processed_count} images processed, {unprocessed_count} unprocessed. "
-                f"Images processing time is {process_minutes:.0f} minutes {process_seconds:.0f} seconds."
-            )
-        else:
-            # Display process time in hours, minutes, and seconds
-            process_hours = process_time // 3600
-            process_minutes = (process_time % 3600) // 60
-            process_seconds = (process_time % 3600) % 60
-            logger.info(
-                f"Processing complete: "
-                f"{processed_count} images processed, {unprocessed_count} unprocessed. "
-                f"Images processing time is {process_hours:.0f} "
-                f"{'hour' if process_hours == 1 else 'hours'} "
-                f"{process_minutes:.0f} minutes {process_seconds:.0f} seconds."
-            )
+
+        # Display the processing time of a function
+        execution_timer(
+            processed_count=processed_count,
+            unprocessed_count=unprocessed_count,
+            process_time=process_time,
+        )
 
 
 def __str__(self):
