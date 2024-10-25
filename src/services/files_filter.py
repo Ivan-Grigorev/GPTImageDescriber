@@ -7,7 +7,7 @@ from pathlib import Path
 
 from PIL import Image, JpegImagePlugin
 
-from src.logging_config import setup_logger
+from src.services.logging_config import setup_logger
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)

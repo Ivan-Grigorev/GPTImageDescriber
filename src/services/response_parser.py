@@ -5,8 +5,8 @@ import string
 import sys
 from typing import Optional
 
-from src.chatgpt_responder import process_photo
-from src.logging_config import setup_logger
+from src.services.chatgpt_responder import process_photo
+from src.services.logging_config import setup_logger
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)

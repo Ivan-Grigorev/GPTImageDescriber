@@ -5,7 +5,7 @@ import sys
 from src.caption_csv_generator import CaptionCSVGenerator
 from src.csv_generator import CSVGenerator
 from src.image_describer import ImagesDescriber
-from src.logging_config import setup_logger
+from src.services.logging_config import setup_logger
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)

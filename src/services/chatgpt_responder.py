@@ -6,7 +6,7 @@ from typing import Optional
 
 import requests
 
-from src.logging_config import setup_logger
+from src.services.logging_config import setup_logger
 
 # Initialize logger using the setup function
 logger = setup_logger(__name__)
