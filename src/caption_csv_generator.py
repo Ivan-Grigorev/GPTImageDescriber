@@ -96,7 +96,12 @@ class CaptionCSVGenerator:
 
                             # Get image caption from image metadata
                             image_caption = info['caption/abstract']
-                            print(image_caption)  # TODO
+                            if not image_caption:
+                                logger.warning(
+                                    f"The file '{image_name}' does not contain IPTC metadata. "
+                                    "Title, description, and keywords will be generated "
+                                    "without using the image caption."
+                                )
 
                             # Get cleaned data from GPT response
                             title, description, keywords = parse_response(

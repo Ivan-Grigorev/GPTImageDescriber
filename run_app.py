@@ -61,27 +61,24 @@ def main():
 
         # Folder paths message based on the folder conditions
         if dst_folder and src_folder != dst_folder:
-            simple_logger.info(
+            simple_logger.warning(
                 f"Source Folder (from which the application will retrieve images): '{src_folder}'\n"
                 f"Destination Folder (where images with added metadata, or CSV files will be saved): '{dst_folder}'"
             )
 
         elif src_folder == dst_folder:
             simple_logger.warning(
-                f"The Source Folder (from which the application will retrieve images): '{src_folder}' and the\n"
+                f"The Source Folder (from which the application will retrieve images): '{src_folder}' and the "
                 f"Destination Folder (where images with added metadata or CSV files will be saved):"
-                f" '{dst_folder}' are the same.\n"
+                f" '{dst_folder}' are the same. "
                 f"This means that the images with added metadata (potentially overwriting"
-                f" the original files) or CSV files will be saved back into the Source Folder,"
+                f" the original files) or CSV files will be saved back into the Source Folder."
             )
 
         else:
-            simple_logger.info(
-                f"Source Folder (from which the application will retrieve images): '{src_folder}'\n"
-                f"Destination Folder (where images with added metadata or CSV files will be saved):"
-            )
             simple_logger.warning(
-                "No destination folder specified. "
+                f"Source Folder (from which the application will retrieve images): '{src_folder}'\n"
+                f"No destination folder specified. "
                 "Images with added metadata (potentially overwriting the original files) or CSV files"
                 " will be saved back into the Source folder."
             )
@@ -97,12 +94,12 @@ def main():
             "and save the CSV file to the destination folder.\n"
             "** Option 3 **: Describe all images in the source folder using ChatGPT, utilizing "
             "captions extracted from image metadata, generate a CSV file with the image filename,"
-            " titles, descriptions, and keywords, and save the CSV file to the destination folder.\n"
+            " titles, descriptions, and keywords, and save the CSV file to the destination folder."
         )
         while True:
             user_confirmation = (
                 input(
-                    'Confirm the start of the process by choosing option 1, 2 or 3 '
+                    'Confirm the start of the process by choosing option 1, 2, or 3, '
                     'or cancel the process by entering (N):\n>>> '
                 )
                 .strip()
